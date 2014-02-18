@@ -39,6 +39,9 @@ public class FingerprintingCopyMethod extends Copier {
     private AbstractBuild<?,?> src;
     
     private AbstractBuild<?,?> dst;
+
+    private CopiedArtifactsRunAction cara;
+
     private final MessageDigest md5 = newMD5();
     private final Map<String,String> fingerprints = new HashMap<String, String>();
 
@@ -46,6 +49,7 @@ public class FingerprintingCopyMethod extends Copier {
     public void init(Run src, AbstractBuild<?, ?> dst, FilePath srcDir, FilePath baseTargetDir) throws IOException, InterruptedException {
         this.src = src instanceof AbstractBuild ? (AbstractBuild)src : null;
         this.dst = dst;
+        this.cara = dst.getAction(CopiedArtifactsRunAction.class);
         fingerprints.clear();
     }
 
@@ -66,6 +70,9 @@ public class FingerprintingCopyMethod extends Copier {
             if (tail.startsWith("\\") || tail.startsWith("/"))
                 tail = tail.substring(1);
             copyOne(file, new FilePath(targetDir, tail), fingerprintArtifacts);
+            if (this.cara != null) {
+                this.cara.recordSourceFile(this.src, tail);
+            }
         }
         return list.length;
     }

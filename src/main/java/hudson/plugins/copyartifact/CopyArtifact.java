@@ -361,6 +361,11 @@ public class CopyArtifact extends Builder {
             return isOptional();  // Fail build unless copy is optional
         }
 
+        CopiedArtifactsRunAction a = dst.getAction(CopiedArtifactsRunAction.class);
+        if (a == null) {
+            a = new CopiedArtifactsRunAction();
+            dst.addAction(a);
+        }
         copier.init(src,dst,srcDir,baseTargetDir);
         try {
             int cnt;
@@ -369,8 +374,11 @@ public class CopyArtifact extends Builder {
             else {
                 targetDir.mkdirs();  // Create target if needed
                 FilePath[] list = srcDir.list(expandedFilter);
-                for (FilePath file : list)
+                for (FilePath file : list) {
                     copier.copyOne(file, new FilePath(targetDir, file.getName()), isFingerprintArtifacts());
+                    String relativePath = file.getRemote().substring(srcDir.getRemote().length() + 1);
+                    a.recordSourceFile(src, relativePath);
+                }
                 cnt = list.length;
             }
 
